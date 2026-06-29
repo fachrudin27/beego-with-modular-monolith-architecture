@@ -1,4 +1,4 @@
-# beego-clean-api-starter
+# beego-with-modular-monolith-architecture
 
 Starter backend API using **Beego**, **Domain-Driven Design style layering**, and a **modular monolith** structure.
 
@@ -253,13 +253,3 @@ Planned next updates:
 - Loki log shipping example
 - Request access log middleware
 - More unit tests for services and middleware
-
-## Repository Name
-
-Suggested GitHub repository name:
-
-```text
-beego-clean-api-starter
-```
-
-This name reflects the goal of the project: a clean starter API using Beego with modular monolith and DDD-inspired boundaries.
