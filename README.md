@@ -15,6 +15,9 @@ The project is designed as a practical foundation for building Go APIs where eac
 - Native Zap structured logging
 - Loki-friendly JSON logs
 - Request and response logging with sensitive field redaction
+- PostgreSQL database integration for the ordering module
+- Repository layer with application-level repository contracts
+- Module-owned database migrations
 - IP-based rate limiting
 - Endpoint tests using Go test
 
@@ -33,7 +36,9 @@ internal/
   ordering/
     delivery/api/     HTTP controller layer
     app/              application use cases
+      repository.go   repository contract used by the app layer
     domain/           request/response/domain models
+    infra/postgres/   PostgreSQL connection, repository implementation, migrations
     client.go         module contract
 
   shared/
@@ -57,6 +62,7 @@ The intended boundaries are:
 delivery/api  -> handles Beego HTTP details
 app           -> contains use case/business flow
 domain        -> contains module data contracts
+infra         -> contains concrete storage/external integrations
 shared        -> cross-cutting infrastructure helpers
 ```
 
@@ -64,6 +70,9 @@ Practical rules:
 
 - Controllers may know Beego.
 - Services should use `context.Context`, not Beego context.
+- Services depend on repository interfaces, not concrete PostgreSQL implementations.
+- PostgreSQL implementations live under module `infra/postgres`.
+- Migrations are owned by the module storage implementation.
 - Domain types should not depend on HTTP, logger, or Beego.
 - Technical error details should be logged, not returned directly to users.
 - User responses should stay stable and safe.
@@ -80,6 +89,8 @@ HTTP request
   -> JWT middleware
   -> Beego controller
   -> application service
+  -> repository interface
+  -> PostgreSQL repository implementation
   -> shared response writer
 ```
 
@@ -192,6 +203,18 @@ copyrequestbody = true
 jwtsecret = change-this-secret
 jwtissuer = firstbeegoapi
 jwtexpiresin = 3600
+
+ordering_postgres_dsn =
+ordering_postgres_host = localhost
+ordering_postgres_port = 5432
+ordering_postgres_user = postgres
+ordering_postgres_password = postgres
+ordering_postgres_database = firstbeegoapi
+ordering_postgres_sslmode = disable
+ordering_postgres_max_open_conns = 10
+ordering_postgres_max_idle_conns = 5
+ordering_postgres_conn_max_lifetime_seconds = 300
+ordering_postgres_ping_timeout_seconds = 5
 ```
 
 For non-dev environments, set a real JWT secret. The application will reject the default secret outside `dev` mode.
@@ -202,6 +225,56 @@ You can also set:
 export JWT_SECRET="your-secure-secret"
 export JWT_ISSUER="firstbeegoapi"
 ```
+
+## Database
+
+The ordering module has its own PostgreSQL integration under:
+
+```text
+internal/ordering/infra/postgres/
+```
+
+The application layer defines the repository contract:
+
+```text
+internal/ordering/app/repository.go
+```
+
+The PostgreSQL implementation lives in:
+
+```text
+internal/ordering/infra/postgres/repository/
+```
+
+The dependency direction is:
+
+```text
+delivery/api -> app -> app.OrderingRepository interface
+infra/postgres/repository -> implements app.OrderingRepository
+main.go -> wires concrete PostgreSQL repository into the ordering service
+```
+
+At runtime, `main.go` initializes the ordering PostgreSQL connection from `ordering_postgres_*` config keys and injects the repository into the ordering service.
+
+## Database Migrations
+
+Migrations are stored inside the module infrastructure folder, because each module may own a different storage technology.
+
+Ordering PostgreSQL migrations:
+
+```text
+internal/ordering/infra/postgres/migrations/
+  000002_create_ordering_table_order.up.sql
+  000002_create_ordering_table_order.down.sql
+```
+
+This keeps storage ownership close to the module:
+
+```text
+ordering module -> postgres infra -> postgres migrations
+```
+
+If another module later uses MySQL, Elasticsearch, or another database, it can keep its own migration/setup files under that module's `infra` folder.
 
 ## Running
 
@@ -243,10 +316,14 @@ GET /v1/ordering/:objectId
 
 ## Roadmap
 
+Implemented:
+
+- Database integration for the ordering module
+- Repository layer for the ordering module
+- Module-owned PostgreSQL migrations
+
 Planned next updates:
 
-- Database integration and repository layer
-- Database migrations
 - Dockerfile and Docker Compose setup
 - Prometheus metrics endpoint
 - Grafana dashboard setup
