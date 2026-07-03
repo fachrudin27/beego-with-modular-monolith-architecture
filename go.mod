@@ -5,8 +5,8 @@ go 1.25.0
 require github.com/beego/beego/v2 v2.1.0
 
 require (
-	github.com/bytedance/gopkg v0.1.4
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/lib/pq v1.10.9
 	github.com/smartystreets/goconvey v1.6.4
 	go.uber.org/zap v1.28.0
 	golang.org/x/time v0.15.0

@@ -6,5 +6,5 @@ package domain
 // }
 
 type CheckOrderByProductIdResponse struct {
-	ProductId int64 `json:"product_id"`
+	ProductName string `json:"product_name"`
 }

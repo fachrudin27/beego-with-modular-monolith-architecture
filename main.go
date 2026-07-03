@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
+	"firstbeegoapi/internal/ordering/app"
+	orderingapi "firstbeegoapi/internal/ordering/delivery/api"
+	orderingpostgres "firstbeegoapi/internal/ordering/infra/postgres"
+	orderingrepo "firstbeegoapi/internal/ordering/infra/postgres/repository"
 	"firstbeegoapi/internal/shared"
 	_ "firstbeegoapi/routers"
 
@@ -26,6 +31,21 @@ func main() {
 	if err := shared.ValidateJWTConfig(beego.BConfig.RunMode); err != nil {
 		panic(fmt.Errorf("invalid jwt configuration: %w", err))
 	}
+
+	if err := orderingpostgres.Init(context.Background()); err != nil {
+		panic(fmt.Errorf("failed to initialize ordering postgres: %w", err))
+	}
+	defer func() {
+		_ = orderingpostgres.Close()
+	}()
+
+	orderingDB, err := orderingpostgres.DB()
+	if err != nil {
+		panic(fmt.Errorf("failed to get ordering postgres: %w", err))
+	}
+
+	orderingRepository := orderingrepo.NewOrderingRepository(orderingDB)
+	orderingapi.SetOrderingService(app.NewOrderingService(orderingRepository))
 
 	beego.Run()
 }

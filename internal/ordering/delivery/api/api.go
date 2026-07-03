@@ -3,9 +3,7 @@ package api
 import (
 	"encoding/json"
 	"firstbeegoapi/internal/ordering/app"
-	"firstbeegoapi/internal/ordering/domain"
 	"firstbeegoapi/internal/shared"
-	"strconv"
 
 	beego "github.com/beego/beego/v2/server/web"
 )
@@ -13,6 +11,16 @@ import (
 type OrderingController struct {
 	beego.Controller
 	app.OrderingService
+}
+
+var orderingService = app.NewOrderingService(nil)
+
+func SetOrderingService(service *app.OrderingService) {
+	if service == nil {
+		return
+	}
+
+	orderingService = service
 }
 
 // @Title Get
@@ -23,17 +31,10 @@ type OrderingController struct {
 // @router /:objectId [get]
 func (o *OrderingController) Get() {
 
-	objectId := o.Ctx.Input.Param(":objectId")
-	if objectId == "" {
-		shared.ZapLogger("warn", "Ordering Get API Log", "ordering", "/api", shared.RequestID(o.Ctx), o.Ctx.Request.URL.Path, o.Ctx.Input.RequestBody, []byte("object id is required"))
-		shared.WriteError(o.Ctx, shared.NewValidationError("missing_object_id", "object id is required"))
-		return
-	}
-
-	id, err := strconv.Atoi(objectId)
+	request, err := validateCheckOrderByProductIDRequest(o.Ctx.Input.Param(":objectId"))
 	if err != nil {
 		shared.ZapLogger("warn", "Ordering Get API Log", "ordering", "/api", shared.RequestID(o.Ctx), o.Ctx.Request.URL.Path, o.Ctx.Input.RequestBody, []byte(err.Error()))
-		shared.WriteError(o.Ctx, shared.NewValidationError("invalid_object_id", "object id must be a number"))
+		shared.WriteError(o.Ctx, err)
 		return
 	}
 
@@ -46,9 +47,7 @@ func (o *OrderingController) Get() {
 		RequestBody: o.Ctx.Input.RequestBody,
 	})
 
-	service, err := o.OrderingService.CheckOrderByProductIdAct(serviceCtx, domain.CheckOrderByProductIdRequest{
-		ProductId: int64(id),
-	})
+	service, err := orderingService.CheckOrderByProductIdAct(serviceCtx, request)
 	if err != nil {
 		shared.ZapLogger("error", "Ordering Get API Log", "ordering", "/api", shared.RequestID(o.Ctx), o.Ctx.Request.URL.Path, o.Ctx.Input.RequestBody, []byte(err.Error()))
 		shared.WriteError(o.Ctx, err)

@@ -37,6 +37,10 @@ func (a *AuthController) Login() {
 		shared.WriteError(a.Ctx, shared.NewValidationError("invalid_request_body", "request body must be valid json"))
 		return
 	}
+	if err := validateLoginRequest(request); err != nil {
+		shared.WriteError(a.Ctx, err)
+		return
+	}
 
 	response, err := a.AuthService.LoginAct(a.Ctx.Request.Context(), request)
 	if err != nil {
