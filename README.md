@@ -226,6 +226,25 @@ export JWT_SECRET="your-secure-secret"
 export JWT_ISSUER="firstbeegoapi"
 ```
 
+## Docker Setup
+
+Docker support is now started, with the current layout split by responsibility:
+
+```text
+Dockerfile                  container build for the Beego app
+conf/docker-compose.yaml    local orchestration for app, postgres, and migrate
+conf/app.conf               Beego application config
+conf/.env                   Docker/PostgreSQL environment values
+```
+
+Current progress:
+
+- The application image build is available through `Dockerfile`
+- Compose is wired for local container orchestration
+- PostgreSQL and migration containers are separated from the app container
+- Beego still reads its runtime settings from `app.conf`
+- Docker-specific secrets and database values are kept in `.env`
+
 ## Database
 
 The ordering module has its own PostgreSQL integration under:
@@ -321,10 +340,11 @@ Implemented:
 - Database integration for the ordering module
 - Repository layer for the ordering module
 - Module-owned PostgreSQL migrations
+- Dockerfile for containerizing the Beego app
+- Docker Compose scaffold for app, PostgreSQL, and migrations
 
 Planned next updates:
 
-- Dockerfile and Docker Compose setup
 - Prometheus metrics endpoint
 - Grafana dashboard setup
 - Loki log shipping example
