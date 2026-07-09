@@ -9,17 +9,26 @@ import (
 	"firstbeegoapi/internal/shared"
 )
 
-func (s *AuthService) LoginAct(ctx context.Context, request domain.LoginRequest) (domain.LoginResponse, error) {
+func (a *AuthService) LoginAct(ctx context.Context, request domain.LoginRequest) (domain.LoginResponse, error) {
 	email := strings.TrimSpace(strings.ToLower(request.Email))
 	if email == "" {
+		if logCtx, ok := shared.LogContextFrom(ctx); ok {
+			shared.ZapLogger("info", "Login POST API Log", logCtx.Service, logCtx.RequestID, logCtx.URL, logCtx.RequestBody, []byte("email is required"))
+		}
 		return domain.LoginResponse{}, shared.NewValidationError("missing_email", "email is required")
 	}
 	if request.Password == "" {
+		if logCtx, ok := shared.LogContextFrom(ctx); ok {
+			shared.ZapLogger("info", "Login POST API Log", logCtx.Service, logCtx.RequestID, logCtx.URL, logCtx.RequestBody, []byte("password is required"))
+		}
 		return domain.LoginResponse{}, shared.NewValidationError("missing_password", "password is required")
 	}
 
 	user, ok := authenticateUser(email, request.Password)
 	if !ok {
+		if logCtx, ok := shared.LogContextFrom(ctx); ok {
+			shared.ZapLogger("info", "Login POST API Log", logCtx.Service, logCtx.RequestID, logCtx.URL, logCtx.RequestBody, []byte("email or password is invalid"))
+		}
 		return domain.LoginResponse{}, shared.NewValidationError("invalid_credentials", "email or password is invalid")
 	}
 
@@ -30,6 +39,9 @@ func (s *AuthService) LoginAct(ctx context.Context, request domain.LoginRequest)
 		Email: user.Email,
 	}, time.Now().Add(expiresIn))
 	if err != nil {
+		if logCtx, ok := shared.LogContextFrom(ctx); ok {
+			shared.ZapLogger("error", "Login POST API Log", logCtx.Service, logCtx.RequestID, logCtx.URL, logCtx.RequestBody, []byte(err.Error()))
+		}
 		return domain.LoginResponse{}, shared.NewInternalError("generate_token_failed", "failed to generate token", err)
 	}
 

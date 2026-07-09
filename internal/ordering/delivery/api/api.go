@@ -33,7 +33,7 @@ func (o *OrderingController) Get() {
 
 	request, err := validateCheckOrderByProductIDRequest(o.Ctx.Input.Param(":objectId"))
 	if err != nil {
-		shared.ZapLogger("warn", "Ordering Get API Log", "ordering", "/api", shared.RequestID(o.Ctx), o.Ctx.Request.URL.Path, o.Ctx.Input.RequestBody, []byte(err.Error()))
+		shared.ZapLogger("warn", "Ordering Get API Log", "ordering", shared.RequestID(o.Ctx), o.Ctx.Request.URL.Path, o.Ctx.Input.RequestBody, []byte(err.Error()))
 		shared.WriteError(o.Ctx, err)
 		return
 	}
@@ -41,7 +41,6 @@ func (o *OrderingController) Get() {
 	requestID := shared.RequestID(o.Ctx)
 	serviceCtx := shared.WithLogContext(o.Ctx.Request.Context(), shared.LogContext{
 		Service:     "ordering",
-		Position:    "/api",
 		RequestID:   requestID,
 		URL:         o.Ctx.Request.URL.Path,
 		RequestBody: o.Ctx.Input.RequestBody,
@@ -49,13 +48,13 @@ func (o *OrderingController) Get() {
 
 	service, err := orderingService.CheckOrderByProductIdAct(serviceCtx, request)
 	if err != nil {
-		shared.ZapLogger("error", "Ordering Get API Log", "ordering", "/api", shared.RequestID(o.Ctx), o.Ctx.Request.URL.Path, o.Ctx.Input.RequestBody, []byte(err.Error()))
+		shared.ZapLogger("error", "Ordering Get API Log", "ordering", shared.RequestID(o.Ctx), o.Ctx.Request.URL.Path, o.Ctx.Input.RequestBody, []byte(err.Error()))
 		shared.WriteError(o.Ctx, err)
 		return
 	}
 
 	responseJson, _ := json.Marshal(service)
 
-	shared.ZapLogger("info", "Ordering Get API Log", "ordering", "/api", shared.RequestID(o.Ctx), o.Ctx.Request.URL.Path, o.Ctx.Input.RequestBody, responseJson)
+	shared.ZapLogger("info", "Ordering Get API Log", "ordering", shared.RequestID(o.Ctx), o.Ctx.Request.URL.Path, o.Ctx.Input.RequestBody, responseJson)
 	shared.WriteSuccess(o.Ctx, 200, "success get data", service)
 }

@@ -15,6 +15,7 @@ import (
 	"firstbeegoapi/internal/shared"
 
 	beego "github.com/beego/beego/v2/server/web"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func init() {
@@ -23,8 +24,11 @@ func init() {
 
 	// beego.BConfig.RecoverPanic = true
 	beego.InsertFilter("*", beego.BeforeRouter, shared.RequestIDMiddleware)
+	beego.InsertFilter("*", beego.BeforeRouter, shared.PrometheusMiddleware())
 	beego.InsertFilter("*", beego.BeforeRouter, shared.IPLimiterFilter)
 	beego.InsertFilter("/v1/ordering/*", beego.BeforeRouter, shared.JWTAuthMiddleware)
+
+	beego.Handler("/metrics", promhttp.Handler())
 
 	ns := beego.NewNamespace("/v1",
 		beego.NSNamespace("/auth",

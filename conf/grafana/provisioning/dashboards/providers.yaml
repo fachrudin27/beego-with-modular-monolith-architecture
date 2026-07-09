@@ -1,0 +1,10 @@
+apiVersion: 1
+providers:
+  - name: 'Firstbeego Logs'
+    orgId: 1
+    folder: 'Log'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

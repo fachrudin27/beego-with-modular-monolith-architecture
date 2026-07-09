@@ -19,8 +19,12 @@ services:
       - postgres
     networks:
       - mynetwork
-  firstbeego:
-    image: firstbeego:1.0
+  firstbeegoapi:
+    container_name: firstbeegoapi
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: firstbeegoapi:1.0
     ports: 
       - "8080:8080"
     restart: unless-stopped
@@ -28,7 +32,55 @@ services:
       - app.conf
     networks:
       - mynetwork
-
+  loki:
+    image: grafana/loki:latest
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki.yaml:/etc/loki/loki.yaml
+      - loki-data:/loki
+    restart: unless-stopped
+    networks:
+      - mynetwork
+  vector:
+    image: timberio/vector:nightly-alpine
+    command: ["--config", "/etc/vector/vector.yaml"]
+    depends_on:
+      - loki
+      - firstbeegoapi
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./vector.yaml:/etc/vector/vector.yaml:ro
+      - vector-data:/var/lib/vector
+    restart: unless-stopped
+    networks:
+      - mynetwork
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+    networks:
+      - mynetwork
+  grafana:
+    image: grafana/grafana:nightly-slim
+    user: "0"
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    restart: unless-stopped
+    networks:
+      - mynetwork
+volumes:
+  vector-data:
+  loki-data:
 networks:
   mynetwork:
     driver: bridge

@@ -1,11 +1,9 @@
-*.exe
-
-# Local config and secrets
+.git
+.github
+.codex
 .env
 conf/app.conf
 conf/.env
-
-# Local build and tool output
 bin/
 build/
 dist/
@@ -14,6 +12,4 @@ coverage.out
 *.tmp
 *.swp
 *.swo
-
-# OS/editor files
 .DS_Store

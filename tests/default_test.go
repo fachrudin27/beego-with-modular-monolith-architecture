@@ -110,6 +110,27 @@ func TestOrderingWithoutToken(t *testing.T) {
 	})
 }
 
+func TestMetricsExposeHttpRequestsTotal(t *testing.T) {
+	loginBody := bytes.NewBufferString(`{"email":"admin@example.com","password":"password"}`)
+	loginReq, _ := http.NewRequest("POST", "/v1/auth/login", loginBody)
+	loginReq.Header.Set("Content-Type", "application/json")
+	loginW := httptest.NewRecorder()
+	beego.BeeApp.Handlers.ServeHTTP(loginW, loginReq)
+
+	metricsReq, _ := http.NewRequest("GET", "/metrics", nil)
+	metricsW := httptest.NewRecorder()
+	beego.BeeApp.Handlers.ServeHTTP(metricsW, metricsReq)
+
+	Convey("Subject: Test Metrics Endpoint\n", t, func() {
+		Convey("Status Code Should Be 200", func() {
+			So(metricsW.Code, ShouldEqual, 200)
+		})
+		Convey("The Metrics Should Contain http_requests_total", func() {
+			So(metricsW.Body.String(), ShouldContainSubstring, "http_requests_total")
+		})
+	})
+}
+
 func testToken(t *testing.T) string {
 	t.Helper()
 

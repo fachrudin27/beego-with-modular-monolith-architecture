@@ -1,0 +1,72 @@
+data_dir: /var/lib/vector
+
+sources:
+  docker_logs:
+    type: docker_logs
+    docker_host: unix:///var/run/docker.sock
+    include_containers:
+      - firstbeegoapi
+
+transforms:
+  parse_zap_json:
+    type: remap
+    inputs:
+      - docker_logs
+    source: |
+      if is_string(.message) {
+        parsed = parse_json(string!(.message)) ?? null
+        if parsed != null {
+          . = merge!(., parsed)
+        }
+      }
+
+      if !exists(.service) {
+        if exists(.container_name) {
+          .service = .container_name
+        } else {
+          .service = "unknown"
+        }
+      }
+
+      if !exists(.position) {
+        .position = "unknown"
+      }
+
+      if !exists(.request_id) {
+        .request_id = ""
+      }
+
+      if !exists(.level) {
+        if exists(.stream) {
+          .level = .stream
+        } else {
+          .level = "info"
+        }
+      }
+
+      if !exists(.msg) {
+        if exists(.message) {
+          .msg = .message
+        } else {
+          .msg = ""
+        }
+      }
+
+      .log = string!(.msg)
+      del(.partial)
+
+sinks:
+  loki:
+    type: loki
+    inputs:
+      - parse_zap_json
+    endpoint: http://loki:3100
+    encoding:
+      codec: json
+    labels:
+      job: firstbeegoapi
+      service: "{{ service }}"
+      position: "{{ position }}"
+      level: "{{ level }}"
+      container: "{{ container_name }}"
+    remove_timestamp: false

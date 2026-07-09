@@ -10,7 +10,7 @@ import (
 func (o *OrderingRepository) GetOrderByProductIdAct(ctx context.Context, payload int64) (domain.Order, error) {
 	if o.db == nil {
 		if logCtx, ok := shared.LogContextFrom(ctx); ok {
-			shared.ZapLogger("error", "Ordering Get Service Log", logCtx.Service, "/app/get_ordering", logCtx.RequestID, logCtx.URL, logCtx.RequestBody, []byte("*sql.DB is nil"))
+			shared.ZapLogger("error", "Ordering Get Service Log", logCtx.Service, logCtx.RequestID, logCtx.URL, logCtx.RequestBody, []byte("*sql.DB is nil"))
 		}
 		return domain.Order{}, sql.ErrConnDone
 	}
@@ -26,7 +26,7 @@ func (o *OrderingRepository) GetOrderByProductIdAct(ctx context.Context, payload
 	err := o.db.QueryRowContext(ctx, query).Scan(&orderName)
 	if err != nil {
 		if logCtx, ok := shared.LogContextFrom(ctx); ok {
-			shared.ZapLogger("error", "Ordering Get Service Log", logCtx.Service, "/app/get_ordering", logCtx.RequestID, logCtx.URL, logCtx.RequestBody, []byte(err.Error()))
+			shared.ZapLogger("error", "Ordering Get Service Log", logCtx.Service, logCtx.RequestID, logCtx.URL, logCtx.RequestBody, []byte(err.Error()))
 		}
 		return domain.Order{}, err
 	}

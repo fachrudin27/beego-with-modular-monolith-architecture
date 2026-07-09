@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"runtime"
 	"strings"
 
 	"go.uber.org/zap"
@@ -102,7 +103,16 @@ func buildZapConfig(config string) (zap.Config, error) {
 	}, nil
 }
 
-func ZapLogger(status, title, service, position, requestID, url string, requestBody []byte, responseBody []byte) {
+// error, warn, warning, debug
+func ZapLogger(status, title, service, requestID, url string, requestBody []byte, responseBody []byte) {
+
+	_, file, line, ok := runtime.Caller(1)
+
+	position := "unknown:0"
+	if ok {
+		position = formatRelativePath(file, line)
+	}
+
 	fields := []zap.Field{
 		zap.String("service", service),
 		zap.String("position", position),

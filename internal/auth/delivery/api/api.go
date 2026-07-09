@@ -29,24 +29,38 @@ func (a *AuthController) Login() {
 		var err error
 		body, err = io.ReadAll(a.Ctx.Request.Body)
 		if err != nil {
+			shared.ZapLogger("error", "Login POST API Log", "auth", shared.RequestID(a.Ctx), a.Ctx.Request.URL.Path, a.Ctx.Input.RequestBody, []byte(err.Error()))
 			shared.WriteError(a.Ctx, shared.NewValidationError("invalid_request_body", "request body is invalid"))
 			return
 		}
 	}
 	if err := json.Unmarshal(body, &request); err != nil {
+		shared.ZapLogger("error", "Login POST API Log", "auth", shared.RequestID(a.Ctx), a.Ctx.Request.URL.Path, a.Ctx.Input.RequestBody, []byte(err.Error()))
 		shared.WriteError(a.Ctx, shared.NewValidationError("invalid_request_body", "request body must be valid json"))
 		return
 	}
 	if err := validateLoginRequest(request); err != nil {
+		shared.ZapLogger("info", "Login POST API Log", "auth", shared.RequestID(a.Ctx), a.Ctx.Request.URL.Path, a.Ctx.Input.RequestBody, []byte(err.Error()))
 		shared.WriteError(a.Ctx, err)
 		return
 	}
 
-	response, err := a.AuthService.LoginAct(a.Ctx.Request.Context(), request)
+	requestID := shared.RequestID(a.Ctx)
+	serviceCtx := shared.WithLogContext(a.Ctx.Request.Context(), shared.LogContext{
+		Service:     "auth",
+		RequestID:   requestID,
+		URL:         a.Ctx.Request.URL.Path,
+		RequestBody: a.Ctx.Input.RequestBody,
+	})
+
+	response, err := a.AuthService.LoginAct(serviceCtx, request)
 	if err != nil {
+		shared.ZapLogger("info", "Login POST API Log", "auth", shared.RequestID(a.Ctx), a.Ctx.Request.URL.Path, a.Ctx.Input.RequestBody, []byte(err.Error()))
 		shared.WriteError(a.Ctx, err)
 		return
 	}
 
+	responseJson, _ := json.Marshal(response)
+	shared.ZapLogger("info", "Login POST API Log", "auth", shared.RequestID(a.Ctx), a.Ctx.Request.URL.Path, a.Ctx.Input.RequestBody, []byte(responseJson))
 	shared.WriteSuccess(a.Ctx, 200, "login success", response)
 }

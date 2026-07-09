@@ -244,6 +244,35 @@ Current progress:
 - PostgreSQL and migration containers are separated from the app container
 - Beego still reads its runtime settings from `app.conf`
 - Docker-specific secrets and database values are kept in `.env`
+- Vector is used to ship Zap logs from Docker stdout into Loki
+- Grafana is provisioned with a dashboard for log table and status chart views
+- Log entries expose `level`, `request_id`, `service`, `position`, `request`, and `response`
+
+## Observability
+
+Logging and metrics are separated into two paths:
+
+- Prometheus scrapes application metrics from `/metrics`
+- Vector reads Zap JSON logs from Docker and forwards them to Loki
+- Grafana reads Loki logs and renders a table plus a status chart
+
+The log dashboard is focused on:
+
+- `create_date`
+- `level`
+- `request_id`
+- `service`
+- `position`
+- `request`
+- `response`
+
+The status chart groups entries by:
+
+- `error`
+- `warn`
+- `warning`
+- `info`
+- `debug`
 
 ## Database
 
@@ -342,11 +371,11 @@ Implemented:
 - Module-owned PostgreSQL migrations
 - Dockerfile for containerizing the Beego app
 - Docker Compose scaffold for app, PostgreSQL, and migrations
+- Loki log shipping through Vector
+- Grafana dashboard provisioning for application logs
+- Prometheus metrics endpoint and scrape configuration
 
 Planned next updates:
 
-- Prometheus metrics endpoint
-- Grafana dashboard setup
-- Loki log shipping example
 - Request access log middleware
 - More unit tests for services and middleware
