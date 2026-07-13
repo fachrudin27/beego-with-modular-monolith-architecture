@@ -192,6 +192,7 @@ Copy the example config:
 
 ```bash
 cp conf/app.conf.example conf/app.conf
+cp conf/nginx.conf.example conf/nginx.conf
 ```
 
 Important values:
@@ -234,6 +235,7 @@ Docker support is now started, with the current layout split by responsibility:
 Dockerfile                  container build for the Beego app
 conf/docker-compose.yaml    local orchestration for app, postgres, and migrate
 conf/app.conf               Beego application config
+conf/nginx.conf             Nginx reverse proxy config
 conf/.env                   Docker/PostgreSQL environment values
 ```
 
@@ -244,9 +246,19 @@ Current progress:
 - PostgreSQL and migration containers are separated from the app container
 - Beego still reads its runtime settings from `app.conf`
 - Docker-specific secrets and database values are kept in `.env`
+- Nginx proxies port `80` to the app container on `8080`
+- Nginx config is mounted from `conf/nginx.conf`
 - Vector is used to ship Zap logs from Docker stdout into Loki
 - Grafana is provisioned with a dashboard for log table and status chart views
 - Log entries expose `level`, `request_id`, `service`, `position`, `request`, and `response`
+
+Run the Docker stack from the `conf/` directory:
+
+```bash
+docker compose -f conf/docker-compose.yaml up --build
+```
+
+If you want to change the proxy behavior, edit `conf/nginx.conf` and restart the `nginx` container.
 
 ## Observability
 
